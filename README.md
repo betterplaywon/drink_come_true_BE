@@ -6,10 +6,6 @@
 
 ## 💻 설치 방법
 
-   nodemon app
-   
-   npm run dev
-
 ## 커밋 컨벤션
 
 💄 : UI/스타일 파일 추가/수정
