@@ -1,6 +1,7 @@
 const express = require("express");
 const postRouter = require("./routes/post");
 const userRouter = require("./routes/user");
+const cors = require("cors");
 const app = express();
 const db = require("./models");
 
@@ -13,6 +14,11 @@ db.sequelize
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // FE에서 보낸 데이터를 req.body에 넣어주겠다
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("HELLO EXPRESS");
@@ -31,7 +37,7 @@ app.get("/posts", (req, res) => {
 });
 
 app.use("/post", postRouter);
-app.use("user", userRouter);
+app.use("/user", userRouter);
 
 app.listen(3065, () => {
   console.log("서버 실행 중 체크");

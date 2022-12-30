@@ -17,8 +17,10 @@ router.post("/", async (req, res, next) => {
     }
     await User.create({
       email: req.body.email,
+      nickname: req.body.nickname,
       password: hashedPassword,
     });
+
     res.status(200).send("success");
   } catch (error) {
     console.error(error);
