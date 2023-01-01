@@ -5,12 +5,16 @@ const cors = require("cors");
 const app = express();
 const db = require("./models");
 
+const passportConfig = require("./passport");
+
 db.sequelize
   .sync()
   .then(() => {
     console.log("db connect success");
   })
   .catch(console.error);
+
+passportConfig();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // FE에서 보낸 데이터를 req.body에 넣어주겠다
