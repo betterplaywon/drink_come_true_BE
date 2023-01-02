@@ -4,8 +4,14 @@ const userRouter = require("./routes/user");
 const cors = require("cors");
 const app = express();
 const db = require("./models");
+const passport = require("passport");
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+const dotenv = require("dotenv");
 
 const passportConfig = require("./passport");
+
+dotenv.config();
 
 db.sequelize
   .sync()
@@ -20,9 +26,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // FE에서 보낸 데이터를 req.body에 넣어주겠다
 app.use(
   cors({
-    origin: "*",
+    origin: true,
+    credentials: true,
   })
 );
+app.use(cookieParser(process.env.DRINK_SECRET));
+app.use(
+  session({
+    saveUninitialized: false,
+    resave: false,
+    secret: process.env.DRINK_SECRET,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get("/", (req, res) => {
   res.send("HELLO EXPRESS");

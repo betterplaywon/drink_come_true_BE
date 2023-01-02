@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const { User } = require("../models");
+const { User, Post } = require("../models");
 const passport = require("passport");
 
-router.post("login", (req, res, next) => {
+const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
+
+router.post("/login", (req, res, next) => {
   // 미들웨어 확장 사용 가능.
-  passport.authenticate("local", (serverError, successObj, clientError) => {
+  passport.authenticate("local", (serverError, user, clientError) => {
     if (serverError) {
       console.error(serverError);
       return next(serverError);
@@ -22,17 +24,31 @@ router.post("login", (req, res, next) => {
         console.error(loginError);
         return next(loginError);
       }
-      return res.json(user);
+
+      const allUserInfoWithoutPassword = await User.findOne({
+        where: { id: user.id },
+        attributes: {
+          // 데이터를 걸러낼 수 있는 속성
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: Post,
+          },
+          {
+            model: User,
+            as: "Followings",
+          },
+          {
+            model: User,
+            as: "Followers",
+          },
+        ],
+      });
+
+      return res.json(allUserInfoWithoutPassword);
     });
   })(req, res, next); // 기존  passport.authenticate로는 next 사용이 안됬으나 뒤에 붙여줌으로서 사용 가능
-});
-
-router.post("/login", (req, res, next) => {
-  try {
-  } catch (error) {
-    console.error(error);
-    next(error);
-  }
 });
 
 router.post("/", async (req, res, next) => {
@@ -58,6 +74,12 @@ router.post("/", async (req, res, next) => {
     console.error(error);
     next(error);
   }
+});
+
+router.post("/logout", (req, res) => {
+  req.logout();
+  req.session.destroy();
+  res.status(200).send("logout succcess");
 });
 
 module.exports = router;

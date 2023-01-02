@@ -3,6 +3,7 @@ const { Strategy: LocalStrategy } = require("passport-local");
 
 const { User } = require("../models");
 const bcrypt = require("bcrypt");
+
 module.exports = () => {
   passport.use(
     new LocalStrategy(
@@ -27,7 +28,7 @@ module.exports = () => {
           return done(null, false, { reason: "비밀번호가 틀렸습니다" });
         } catch (error) {
           console.error(error);
-          done(error);
+          return done(error);
         }
       }
     )
