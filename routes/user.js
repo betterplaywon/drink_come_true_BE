@@ -6,6 +6,50 @@ const passport = require("passport");
 
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
 
+router.get("/", async (req, res, next) => {
+  // 새로고침 할 때마다 사용자 불러오는 기능
+  try {
+    if (req.user) {
+      const user = await User.findOne({
+        where: {
+          id: req.user.id,
+        },
+      });
+
+      const allUserInfoWithoutPassword = await User.findOne({
+        where: { id: user.id },
+        attributes: {
+          // 데이터를 걸러낼 수 있는 속성
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: Post,
+            attributes: ["id"],
+          },
+          {
+            model: User,
+            as: "Followings",
+            attributes: ["id"],
+          },
+          {
+            model: User,
+            as: "Followers",
+            attributes: ["id"],
+          },
+        ],
+      });
+
+      res.status(200).json(allUserInfoWithoutPassword);
+    } else {
+      res.status(200).json(null);
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 router.post("/login", (req, res, next) => {
   // 미들웨어 확장 사용 가능.
   passport.authenticate("local", (serverError, user, clientError) => {
