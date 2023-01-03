@@ -5,6 +5,7 @@ const { User, Post } = require("../models");
 const passport = require("passport");
 
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
+const { where } = require("sequelize");
 
 router.get("/", async (req, res, next) => {
   // 새로고침 할 때마다 사용자 불러오는 기능
@@ -124,6 +125,24 @@ router.post("/logout", (req, res) => {
   req.logout();
   req.session.destroy();
   res.status(200).send("logout succcess");
+});
+
+router.patch("/nickname", async (req, res, next) => {
+  try {
+    await User.update(
+      {
+        nickname: req.body.nickname,
+      },
+      {
+        where: { id: req.user.id },
+      }
+    );
+
+    res.status(200).json({ nickname: req.body.nickname });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
 });
 
 module.exports = router;
