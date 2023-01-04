@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Post, Image, Comment, User } = require("../models");
+const { Post, Image, Comment, User, Hashtag } = require("../models");
 const multer = require("multer");
 const path = require("path");
 
@@ -33,6 +33,18 @@ router.post("/", upload.none(), async (req, res, next) => {
       content: req.body.content,
       UserId: req.user.id,
     });
+    const hashtags = req.body.content.match(/#[^\s#]+/g);
+
+    if (hashtags) {
+      const result = await Promise.all(
+        hashtags.map((hashtag) =>
+          Hashtag.findOrCreate({
+            where: { name: hashtag.slice(1).toLowerCase() },
+          })
+        )
+      );
+      await post.addHashtags(result.map((m) => m[0])); // 위의 findOrCreate에서 [[ab,true],[cd,true]]와 같은 2차원 배열의 형태를 가지기 때문에 map 사용
+    }
 
     if (req.body.image) {
       if (Array.isArray(req.body.image)) {
@@ -82,7 +94,7 @@ router.post("/", upload.none(), async (req, res, next) => {
   }
 });
 
-router.post("/images", upload.array("image"), async (req, res, next) => {
+router.post("/images", upload.array("image"), (req, res, next) => {
   console.log(req.files);
   res.json(req.files.map((m) => m.filename));
 });
