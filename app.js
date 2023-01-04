@@ -10,7 +10,7 @@ const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
-
+const path = require("path");
 const passportConfig = require("./passport");
 
 dotenv.config();
@@ -24,6 +24,7 @@ db.sequelize
 
 passportConfig();
 
+app.use("/", express.static(path.join(__dirname, "uploads"))); // image upload 관련 코드, static은 디렉토리 네임이 현재 폴더이고 업로드를 합쳐준다는 의미.
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // FE에서 보낸 데이터를 req.body에 넣어주겠다

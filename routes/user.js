@@ -227,8 +227,7 @@ router.delete("/follower/:userId", async (req, res, next) => {
     // follower와 following이 대칭관계이니 following 사용해도 괜찮을듯?
     // await User.removeFollowings(req.params.userId);
     // await User.removeFollowings(req.user.Id);
-    // 'U'ser 가 아니라 'u'ser를 사용해줬더니 오류 해결. 무슨 차이인지 알아봐야함
-    await User.removeFollowings(req.user.Id);
+    await user.removeFollowings(req.user.Id);
 
     res.status(200).json({ UserId: parseInt(req.params.userId, 10) });
   } catch (error) {
