@@ -145,4 +145,96 @@ router.patch("/nickname", async (req, res, next) => {
   }
 });
 
+router.patch("/:userId/follow", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.params.userId,
+      },
+    });
+    if (!user) {
+      res.status(403).send("존재하지 않는 회원입니다");
+    }
+    await user.addFollowers(req.user.id);
+    res.status(200).json({ UserId: parseInt(req.params.userId, 10) });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.delete("/:userId/follow", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.params.userId,
+      },
+    });
+    if (!user) {
+      res.status(403).send("존재하지 않는 회원입니다");
+    }
+    await user.removeFollowers(req.user.id);
+    res.status(200).json({ UserId: parseInt(req.params.userId, 10) });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get("/followers", async (req, res, next) => {
+  //
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.user.id,
+      },
+    });
+    const followers = await User.getFollowers();
+
+    res.status(200).json(followers);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get("/followings", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.user.id,
+      },
+    });
+    const followings = await User.getFollowings();
+
+    res.status(200).json(followings);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.delete("/follower/:userId", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.params.userId,
+      },
+    });
+    if (!user) {
+      res.status(403).send("지우려는 유저가 존재하지 않습니다");
+    }
+    // follower와 following이 대칭관계이니 following 사용해도 괜찮을듯?
+    // await User.removeFollowings(req.params.userId);
+    // await User.removeFollowings(req.user.Id);
+    // 'U'ser 가 아니라 'u'ser를 사용해줬더니 오류 해결. 무슨 차이인지 알아봐야함
+    await User.removeFollowings(req.user.Id);
+
+    res.status(200).json({ UserId: parseInt(req.params.userId, 10) });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 module.exports = router;
