@@ -51,6 +51,47 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.get("/:userId", async (req, res, next) => {
+  // 새로고침 할 때마다 사용자 불러오는 기능
+  try {
+    const allUserInfoWithoutPassword = await User.findOne({
+      where: { id: req.params.userId },
+      attributes: {
+        // 데이터를 걸러낼 수 있는 속성
+        exclude: ["password"],
+      },
+      include: [
+        {
+          model: Post,
+          attributes: ["id"],
+        },
+        {
+          model: User,
+          as: "Followings",
+          attributes: ["id"],
+        },
+        {
+          model: User,
+          as: "Followers",
+          attributes: ["id"],
+        },
+      ],
+    });
+    if (allUserInfoWithoutPassword) {
+      const data = allUserInfoWithoutPassword.toJSON(); // 그냥 전달해주는 방법도 있겠지만 불필요하게 많은 정보를 보낼 필요도 없고, 타인의 개인 정보를 해킹당할 우려도 있기에 length만 간추려 전달
+      data.Posts = data.Posts.length;
+      data.Followers = data.Followers.length;
+      data.Followings = data.Followings.length;
+      res.status(200).json(data);
+    } else {
+      res.status(404).json("존재하지 않는 사용자입니다");
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 router.post("/login", (req, res, next) => {
   // 미들웨어 확장 사용 가능.
   passport.authenticate("local", (serverError, user, clientError) => {
