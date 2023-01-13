@@ -1,14 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const { User, Post } = require("../models");
+const { User, Post, Image, Comment } = require("../models");
 const passport = require("passport");
 
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
 const { where } = require("sequelize");
+const { Op } = require("sequelize");
 
 router.get("/", async (req, res, next) => {
-  // 새로고침 할 때마다 사용자 불러오는 기능
   try {
     if (req.user) {
       const user = await User.findOne({
@@ -20,7 +20,6 @@ router.get("/", async (req, res, next) => {
       const allUserInfoWithoutPassword = await User.findOne({
         where: { id: user.id },
         attributes: {
-          // 데이터를 걸러낼 수 있는 속성
           exclude: ["password"],
         },
         include: [
@@ -45,6 +44,48 @@ router.get("/", async (req, res, next) => {
     } else {
       res.status(200).json(null);
     }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get("/followers", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!user) {
+      return res.status(403).send("없는 유저입니다");
+    }
+    const followers = await user.getFollowers({
+      limit: parseInt(req.query.limit, 10),
+    });
+
+    res.status(200).json(followers);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get("/followings", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!user) {
+      return res.status(403).send("없는 유저입니다");
+    }
+    const followings = await user.getFollowings({
+      limit: parseInt(req.query.limit, 10),
+    });
+
+    res.status(200).json(followings);
   } catch (error) {
     console.error(error);
     next(error);
@@ -86,6 +127,53 @@ router.get("/:userId", async (req, res, next) => {
     } else {
       res.status(404).json("존재하지 않는 사용자입니다");
     }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get("/:userId/posts", async (req, res, next) => {
+  try {
+    const where = { UserId: req.params.userId };
+    const endId = parseInt(req.query.endId, 10);
+    if (endId) {
+      where.id = { [Op.lt]: endId };
+    }
+    const posts = await Post.findAll({
+      where,
+      limit: 10,
+      order: [
+        ["createdAt", "DESC"],
+        // [Comment, "createdAt", "DESC"],
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ["id", "nickname"],
+        },
+        {
+          model: Image,
+        },
+        {
+          model: Comment,
+          include: [
+            {
+              model: User,
+              attributes: ["id", "nickname"],
+              order: [["createdAt", "DESC"]],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: "Likers",
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    res.status(200).json(posts);
   } catch (error) {
     console.error(error);
     next(error);
@@ -216,39 +304,6 @@ router.delete("/:userId/follow", async (req, res, next) => {
     }
     await user.removeFollowers(req.user.id);
     res.status(200).json({ UserId: parseInt(req.params.userId, 10) });
-  } catch (error) {
-    console.error(error);
-    next(error);
-  }
-});
-
-router.get("/followers", async (req, res, next) => {
-  //
-  try {
-    const user = await User.findOne({
-      where: {
-        id: req.user.id,
-      },
-    });
-    const followers = await User.getFollowers();
-
-    res.status(200).json(followers);
-  } catch (error) {
-    console.error(error);
-    next(error);
-  }
-});
-
-router.get("/followings", async (req, res, next) => {
-  try {
-    const user = await User.findOne({
-      where: {
-        id: req.user.id,
-      },
-    });
-    const followings = await User.getFollowings();
-
-    res.status(200).json(followings);
   } catch (error) {
     console.error(error);
     next(error);
